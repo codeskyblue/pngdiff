@@ -1,9 +1,9 @@
-// Package main provides ...
+// Package pngdiff provides ...
+// image.RGBA diff and patch
 package pngdiff
 
 import (
 	"errors"
-	"fmt"
 	"image"
 	"image/png"
 	"os"
@@ -18,8 +18,8 @@ func Diff(imold, imnew *image.RGBA) (patch *image.RGBA, err error) {
 	}
 	patch = image.NewRGBA(imold.Rect)
 	pixold, pixnew := imold.Pix, imnew.Pix
-	n := 0
-	tot := 0
+	//n := 0
+	//tot := len(imold.Pix)/4
 
 	for i := 0; i < len(imold.Pix)/4; i++ {
 		if pixold[i*4] != pixnew[i*4] ||
@@ -27,51 +27,30 @@ func Diff(imold, imnew *image.RGBA) (patch *image.RGBA, err error) {
 			pixold[i*4+2] != pixnew[i*4+2] ||
 			pixold[i*4+3] != pixnew[i*4+3] {
 			copy(patch.Pix[i*4:i*4+4], pixnew[i*4:i*4+4])
-			n++
+			//		n++
 		}
-		tot++
 	}
-	fmt.Println(n, tot)
+	//fmt.Println(n, tot)
 	return
 }
 
+// Patch applies patch to im, and writes the result to out
 func Patch(im *image.RGBA, patch *image.RGBA) (out *image.RGBA, err error) {
 	if im.Rect != patch.Rect {
 		return nil, ErrSizeNotMatch
 	}
 	out = image.NewRGBA(im.Rect)
-	n := 0
-	tot := 0
 	for i := 0; i < len(im.Pix)/4; i++ {
-		tot++
 		if patch.Pix[i*4+3] == 0 {
 			copy(out.Pix[i*4:i*4+4], im.Pix[i*4:i*4+4])
 		} else {
-			n++
 			copy(out.Pix[i*4:i*4+4], patch.Pix[i*4:i*4+4])
 		}
 	}
-	fmt.Println(n, tot)
 	return
 }
 
-/*
-func rawRead(filename string) (im *image.RGBA, err error) {
-	var width, height, format int32
-	bf, err := os.Open(filename)
-	if err != nil {
-		return
-	}
-	binary.Read(bf, binary.LittleEndian, &width)
-	binary.Read(bf, binary.LittleEndian, &height)
-	binary.Read(bf, binary.LittleEndian, &format)
-	fmt.Println(width, height, format)
-	im = image.NewRGBA(image.Rectangle{image.ZP, image.Point{int(width), int(height)}})
-	_, err = bf.Read(im.Pix)
-	return
-}
-*/
-
+// Read png file
 func ReadFile(filename string) (im *image.RGBA, err error) {
 	fd, err := os.Open(filename)
 	if err != nil {
@@ -84,6 +63,7 @@ func ReadFile(filename string) (im *image.RGBA, err error) {
 	return img.(*image.RGBA), nil
 }
 
+// Write RGBA struct as png file
 func WriteFile(filename string, im *image.RGBA) error {
 	fd, err := os.Create(filename)
 	if err != nil {
